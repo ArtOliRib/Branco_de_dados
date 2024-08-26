@@ -36,7 +36,7 @@ public class Main {
                         String carro = scanner.nextLine();
                         System.out.print("Valor (em reais): ");
                         double valor = scanner.nextDouble();
-                        carPartDAO.insertPart(nomePeca, carro, valor);
+                        carPartDAO.insertPart(carro, nomePeca, valor);
                         break;
                     case 2:
                         carPartDAO.showAllParts();
@@ -45,14 +45,18 @@ public class Main {
                     case 3:
                         System.out.print("Nome da peça a ser atualizada: ");
                         nomePeca = scanner.nextLine();
+                        System.out.print("Nome do carro a que a peça pertence: ");
+                        carro = scanner.nextLine();
                         System.out.print("Novo valor (em reais): ");
                         valor = scanner.nextDouble();
-                        carPartDAO.updatePart(nomePeca, valor);
+                        carPartDAO.updatePart(nomePeca, carro, valor);
                         break;
                     case 4:
                         System.out.print("Nome da peça a ser removida: ");
                         nomePeca = scanner.nextLine();
-                        carPartDAO.deletePart(nomePeca);
+                        System.out.print("Nome do carro a que a peça pertence: ");
+                        carro = scanner.nextLine();
+                        carPartDAO.deletePart(nomePeca, carro);
                         break;
                     case 5:
                         System.out.println("Saindo...");
