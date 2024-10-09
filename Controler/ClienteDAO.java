@@ -2,6 +2,9 @@ package Controler;
 
 import Classes.Cliente;
 import Banco.Banco;
+import java.util.Scanner;
+
+import java.math.BigDecimal;
 import java.sql.*;
 
 public class ClienteDAO {
@@ -59,44 +62,91 @@ public class ClienteDAO {
         }
     }
 
-    // Método para fazer login do cliente
-    public void login(String cpf, String senha) throws SQLException {
-        String queryCliente = "SELECT * FROM Cliente WHERE cpf = ? and senha = ?";
-        /*
-        String queryFuncionario = "SELECT * FROM Cliente WHERE cpf = ? and senha = ?";
-         */
-        PreparedStatement stmtCliente = conn.prepareStatement(queryCliente);
-        /*
-        PreparedStatement stmtFuncionario = conn.prepareStatement(queryFuncionario);
-         */
-        stmtCliente.setString(1, cpf);
-        stmtCliente.setString(2, senha);
+    public int login(String emailOuNumero, String senha) throws SQLException {
+        // Consulta para verificar login do Cliente (usando email)
+        String queryCliente = "SELECT * FROM Cliente WHERE email = ? and senha = ?";
 
-        /*
-        stmtFuncionario.setString(1, cpf);
-        stmtFuncionario.setString(2, senha);
-        */
-        ResultSet rsCliente = stmtCliente.executeQuery();
-        /*
-        ResultSet rsFuncionario = stmtFuncionario.executeQuery();
-         */
-        if (rsCliente.next()) {
+        // Consulta para verificar login do Funcionario (usando numero_cadastro)
+        String queryFuncionario = "SELECT * FROM Funcionario WHERE numero_cadastro = ? and senha = ?";
 
-            // Troca para o usuário do banco para 'cliente' do banco
-            Banco.closeConnection(); // Fecha a conexão atual
-            conn = Banco.getConnection("cliente", "senha_cliente"); // Conecta com as credenciais do cliente
+        // Verifica se a entrada é um email (presença de '@') ou CPF
+        if (emailOuNumero.contains("@")) {
+            // Login como Cliente (email)
+            PreparedStatement stmtCliente = conn.prepareStatement(queryCliente);
+            stmtCliente.setString(1, emailOuNumero);
+            stmtCliente.setString(2, senha);
+            ResultSet rsCliente = stmtCliente.executeQuery();
 
-            // Atualizando o status do cliente
+            if (rsCliente.next()) {
+                Banco.closeConnection(); // Fecha a conexão atual
+                conn = Banco.getConnection("cliente", "senha_cliente"); // Conecta com as credenciais do cliente
+                System.out.println("Você está logado como Cliente!");
+                return 1;
+            }
+        } else {
+            // Login como Funcionario (numero_cadastro)
+            PreparedStatement stmtFuncionario = conn.prepareStatement(queryFuncionario);
+            stmtFuncionario.setString(1, emailOuNumero);
+            stmtFuncionario.setString(2, senha);
+            ResultSet rsFuncionario = stmtFuncionario.executeQuery();
 
-            System.out.println(("Voce esta logado!"));
-
-        }else{
-
-        // Se não encontrou, retorna null ou uma mensagem indicando login ou senha inválidos
-        System.out.println("Login ou senha inválidos.");
+            if (rsFuncionario.next()) {
+                Banco.closeConnection(); // Fecha a conexão atual
+                conn = Banco.getConnection("funcionario", "senha_funcionario"); // Conecta com as credenciais do funcionário
+                System.out.println("Você está logado como Funcionario!");
+                return 2;
+            }
         }
+
+        // Caso não tenha encontrado cliente ou funcionário, login inválido
+        System.out.println("Login ou senha inválidos.");
+        return 0;
     }
 
+    public void menuVisualizarPecas() throws SQLException {
+        Scanner scanner = new Scanner(System.in);
+        boolean continuar = true;
+
+        while (continuar) {
+            System.out.println("\nMenu Visualizar Peças");
+            System.out.println("1. Listar todas as peças");
+            System.out.println("2. Pesquisar peça por nome");
+            System.out.println("3. Pesquisar peça por fabricante");
+            System.out.println("4. Pesquisar peça por categoria");
+            System.out.println("5. Sair");
+
+            System.out.print("Escolha uma opção: ");
+            int opcao = scanner.nextInt();
+            scanner.nextLine(); // Consumir nova linha
+
+            switch (opcao) {
+                case 1:
+                    this.visualizarPecas();
+                    break;
+                case 2:
+                    System.out.print("Digite o nome da peça: ");
+                    String nome = scanner.nextLine();
+                    this.pesquisarPecaPorNome(nome);
+                    break;
+                case 3:
+                    System.out.print("Digite o nome do fabricante: ");
+                    String fabricante = scanner.nextLine();
+                    this.pesquisarPecaPorFabricante(fabricante);
+                    break;
+                case 4:
+                    System.out.println("Digite a categoria da peça");
+                    String categoria = scanner.nextLine();
+                    this.pesquisarPecaPorCategoria(categoria);
+                    break;
+                case 5:
+                    continuar = false;
+                    System.out.println("Saindo do menu.");
+                    break;
+                default:
+                    System.out.println("Opção inválida, tente novamente.");
+            }
+        }
+    }
 
     // Método para visualizar todas as peças
     public void visualizarPecas() throws SQLException {
@@ -104,12 +154,21 @@ public class ClienteDAO {
         Statement stmt = conn.createStatement(); // Usando o 'conn'
         ResultSet rs = stmt.executeQuery(query);
 
+        System.out.printf("%-30s %-20s %-15s %-50s%n", "Nome", "Categoria", "Preço (R$)", "Descrição");
+        System.out.println("=".repeat(120)); // Linha de separação
+
         while (rs.next()) {
-            System.out.println("Nome: " + rs.getString("produto_nome") +
-                    ", Categoria: " + rs.getString("produto_categoria") +
-                    ", Preço: " + rs.getBigDecimal("produto_preco"));
+            String nome = rs.getString("produto_nome");
+            String categoria = rs.getString("produto_categoria");
+            BigDecimal preco = rs.getBigDecimal("produto_preco");
+            String descricao = rs.getString("produto_descricao");
+
+            System.out.printf("%-30s %-20s %-15.2f %-50s%n", nome, categoria, preco, descricao);
         }
+
+        System.out.println("=".repeat(120)); // Linha de separação no final
     }
+
 
     // Método para pesquisar peças por nome
     public void pesquisarPecaPorNome(String nome) throws SQLException {
@@ -118,11 +177,19 @@ public class ClienteDAO {
         stmt.setString(1, "%" + nome + "%");
 
         ResultSet rs = stmt.executeQuery();
+
+        System.out.printf("%-30s %-20s %-15s %-50s%n", "Nome", "Categoria", "Preço (R$)", "Descrição");
+        System.out.println("=".repeat(120)); // Linha de separação
+
         while (rs.next()) {
-            System.out.println("Nome: " + rs.getString("produto_nome") +
-                    ", Categoria: " + rs.getString("produto_categoria") +
-                    ", Preço: " + rs.getBigDecimal("produto_preco"));
+            System.out.printf("%-30s %-20s %-15.2f %-50s%n",
+                    rs.getString("produto_nome"),
+                    rs.getString("produto_categoria"),
+                    rs.getBigDecimal("produto_preco"),
+                    rs.getString("produto_descricao"));
         }
+
+        System.out.println("=".repeat(120)); // Linha de separação no final
     }
 
     // Método para pesquisar peças por categoria
@@ -132,11 +199,19 @@ public class ClienteDAO {
         stmt.setString(1, categoria);
 
         ResultSet rs = stmt.executeQuery();
+
+        System.out.printf("%-30s %-20s %-15s %-50s%n", "Nome", "Categoria", "Preço (R$)", "Descrição");
+        System.out.println("=".repeat(120)); // Linha de separação
+
         while (rs.next()) {
-            System.out.println("Nome: " + rs.getString("produto_nome") +
-                    ", Categoria: " + rs.getString("produto_categoria") +
-                    ", Preço: " + rs.getBigDecimal("produto_preco"));
+            System.out.printf("%-30s %-20s %-15.2f %-50s%n",
+                    rs.getString("produto_nome"),
+                    rs.getString("produto_categoria"),
+                    rs.getBigDecimal("produto_preco"),
+                    rs.getString("produto_descricao"));
         }
+
+        System.out.println("=".repeat(120)); // Linha de separação no final
     }
 
     // Método para pesquisar peças por fabricante
@@ -146,10 +221,18 @@ public class ClienteDAO {
         stmt.setString(1, fabricante);
 
         ResultSet rs = stmt.executeQuery();
+
+        System.out.printf("%-30s %-20s %-15s %-50s%n", "Nome", "Categoria", "Preço (R$)", "Descrição");
+        System.out.println("=".repeat(120)); // Linha de separação
+
         while (rs.next()) {
-            System.out.println("Nome: " + rs.getString("produto_nome") +
-                    ", Categoria: " + rs.getString("produto_categoria") +
-                    ", Preço: " + rs.getBigDecimal("produto_preco"));
+            System.out.printf("%-30s %-20s %-15.2f %-50s%n",
+                    rs.getString("produto_nome"),
+                    rs.getString("produto_categoria"),
+                    rs.getBigDecimal("produto_preco"),
+                    rs.getString("produto_descricao"));
         }
+
+        System.out.println("=".repeat(120)); // Linha de separação no final
     }
 }

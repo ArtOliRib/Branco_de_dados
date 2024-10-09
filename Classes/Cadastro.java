@@ -39,6 +39,9 @@ public class Cadastro {
                     System.out.print("Sobrenome: ");
                     cliente.setSobrenome(scanner.nextLine());
 
+                    System.out.print("Email: ");
+                    cliente.setEmail(scanner.nextLine());
+
                     System.out.print("CPF (somente números): ");
                     cliente.setCpf(scanner.nextLine());
 
@@ -77,7 +80,7 @@ public class Cadastro {
             }
         }
 
-        scanner.close();
+        //scanner.close();
         System.out.println("Saindo do menu.");
     }
 }

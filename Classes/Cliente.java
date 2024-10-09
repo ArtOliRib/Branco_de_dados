@@ -8,6 +8,7 @@ public class Cliente {
     private String sobrenome; // Sobrenome do cliente
     private String cpf; // CPF do cliente
     private String senha; // Senha do cliente
+    private String email;
     private LocalDate dataNascimento; // Data de nascimento do cliente
     private String torcida; // Time do cliente
     private boolean assisteOp; // Se o cliente assiste One Piece
@@ -46,6 +47,10 @@ public class Cliente {
     public void setSenha(String senha) {
         this.senha = senha;
     }
+
+    public String getEmail() { return email; }
+
+    public void setEmail(String email) { this.email = email; }
 
     public LocalDate getDataNascimento() {
         return dataNascimento;
@@ -87,6 +92,7 @@ public class Cliente {
                 ",\n Sobrenome = '" + sobrenome + '\'' +
                 ",\n CPF = '" + cpf + '\'' +
                 ",\n Senha = '" + senha + '\'' +
+                ",\n Email = '" + email + '\'' +
                 ",\n Data de Nascimento = " + dataNascimento +
                 ",\n Torcida = '" + torcida + '\'' +
                 ",\n Assiste Op = " + assisteOp +
