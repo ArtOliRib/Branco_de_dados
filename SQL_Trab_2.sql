@@ -50,10 +50,11 @@ CREATE TABLE FormaPagamento (
 
 CREATE TABLE Pedido (
     id_pedido BIGINT AUTO_INCREMENT PRIMARY KEY,
-    cliente_id BIGINT NOT NULL,
+    cliente_id BIGINT,
     data_pedido TIMESTAMP NOT NULL,
     funcionario_id BIGINT NOT NULL,
-    forma_pagamento_id BIGINT NOT NULL
+    forma_pagamento_id BIGINT,
+    finalizado BOOLEAN DEFAULT FALSE
 );
 
 CREATE TABLE ItemPedido (
@@ -68,7 +69,7 @@ CREATE TABLE Compra (
     id_compra BIGINT AUTO_INCREMENT PRIMARY KEY,
     cliente_id BIGINT NOT NULL,
     funcionario_id BIGINT NOT NULL,
-    forma_pagamento_id BIGINT NOT NULL,
+    forma_pagamento_id BIGINT,
     data_compra TIMESTAMP NOT NULL
 );
 
@@ -133,6 +134,8 @@ GRANT SELECT ON Cliente TO 'cliente'@'localhost';
 GRANT SELECT ON Produto TO 'cliente'@'localhost';
 GRANT SELECT ON Pedido TO 'cliente'@'localhost';
 
+GRANT UPDATE ON Pedido TO 'cliente'@'localhost';
+
 GRANT INSERT ON Pedido TO 'cliente'@'localhost';
 GRANT INSERT ON ItemPedido TO 'cliente'@'localhost';
 
@@ -177,6 +180,34 @@ GRANT UPDATE ON Funcionario TO 'funcionario'@'localhost';
 GRANT UPDATE ON FormaPagamento TO 'funcionario'@'localhost';
 GRANT UPDATE ON StatusPagamento TO 'funcionario'@'localhost';
 
+
+-- View de detalhes
+CREATE VIEW ItensCarrinho AS
+SELECT 
+    p.id_pedido AS id_pedido,
+    IFNULL(c.nome, 'Cliente não logado') AS cliente_nome,
+    IFNULL(c.sobrenome, '') AS cliente_sobrenome,
+    ip.produto_id AS id_produto,
+    prod.produto_nome AS produto_nome,
+    prod.produto_fabricante AS marca,
+    ip.quantidade AS quantidade,
+    ip.valor_unitario AS valor_unitario,
+    (ip.quantidade * ip.valor_unitario) AS total_item,
+    p.finalizado AS status_pedido
+FROM 
+    Pedido p
+LEFT JOIN 
+    Cliente c ON p.cliente_id = c.id_cliente
+JOIN 
+    ItemPedido ip ON p.id_pedido = ip.pedido_id
+JOIN 
+    Produto prod ON ip.produto_id = prod.id_produto
+WHERE 
+    p.finalizado = FALSE;
+
+
+
+ -- Mock itens and mock people.
 INSERT INTO Funcionario (nome, numero_cadastro, senha, sobrenome) 
 VALUES ('João', '1234567890', 'senha123', 'Silva');
 
@@ -235,25 +266,4 @@ INSERT INTO Produto (produto_nome, produto_descricao, produto_preco, produto_cat
 ('Protetor de Soleira', 'Protetor de soleira em inox', 39.99, 'Acessórios', 'Fabricante P', 30),
 ('Suporte de Bicicleta', 'Suporte para bicicleta no carro', 199.99, 'Acessórios', 'Fabricante Q', 10);
 
-
-
--- View de detalhes
-CREATE VIEW Carrinho AS
-SELECT 
-    p.id_pedido AS id_pedido,
-    c.nome AS cliente_nome,
-    c.sobrenome AS cliente_sobrenome,
-    ip.produto_id AS id_produto,
-    prod.produto_nome AS produto_nome,
-    ip.quantidade AS quantidade,
-    ip.valor_unitario AS valor_unitario,
-    (ip.quantidade * ip.valor_unitario) AS total_item
-FROM 
-    Pedido p
-JOIN 
-    Cliente c ON p.cliente_id = c.id_cliente
-JOIN 
-    ItemPedido ip ON p.id_pedido = ip.pedido_id
-JOIN 
-    Produto prod ON ip.produto_id = prod.id_produto;
     

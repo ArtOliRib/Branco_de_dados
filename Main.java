@@ -1,7 +1,7 @@
 import java.sql.*;
-import java.util.Scanner;
+import java.util.*;
 
-import Classes.Cadastro;
+import Classes.CadastroLogin;
 import Controler.*;
 
 public class Main {
@@ -14,11 +14,14 @@ public class Main {
         Scanner scanner = new Scanner(System.in);
         boolean logadoCliente = false;
         boolean logadoFuncionario = false;
+        long pedido;
 
         try (Connection conn = DriverManager.getConnection(URL, USER, PASSWORD)) {
             System.out.println("Conexão estabelecida com sucesso!");
             ClienteDAO clienteDAO = new ClienteDAO(conn);
-            Cadastro cadastro = new Cadastro(clienteDAO);
+            CarrinhoDAO carrinhoDAO = new CarrinhoDAO(conn);
+            CadastroLogin cadastroLogin = new CadastroLogin(clienteDAO);
+            pedido = carrinhoDAO.criarPedidoTemporario();
 
             boolean running = true;
 
@@ -30,30 +33,55 @@ public class Main {
 
                     switch (opcao) {
                         case 1:
-                            cadastro.exibirMenu(); // Exibir cadastro
+                            cadastroLogin.exibirMenuCadastro(); // Exibir cadastro
                             break;
                         case 2:
-                            // Adicione aqui a lógica para adicionar peças ao carrinho
-                            System.out.println("Adicionar peças ao carrinho - em implementação.");
+                            boolean[] fluxoMenu = cadastroLogin.exibirMenuLogin(logadoCliente,logadoFuncionario, pedido);
+
+                            logadoCliente = fluxoMenu[0];
+                            logadoFuncionario = fluxoMenu[1];
                             break;
                         case 3:
-                            System.out.print("Digite o CPF: ");
-                            String cpf = scanner.nextLine();
-                            System.out.print("Digite a senha: ");
-                            String senha = scanner.nextLine();
-                            if (clienteDAO.login(cpf, senha) == 1) {
-                                logadoCliente = true; // Marcar como logado se o login for bem-sucedido
-                                System.out.println("Login cliente bem-sucedido!");
-                            } else if (clienteDAO.login(cpf, senha) == 2) {
-                                logadoFuncionario = true; // Marcar como logado se o login for bem-sucedido
-                                System.out.println("Login Funcionario bem-sucedido!");
-                            } else {
-                                System.out.println("Login falhou. Verifique CPF e senha.");
-                            }
-                            break;
-                        case 4:
                             clienteDAO.menuVisualizarPecas();
                             break;
+
+                        case 4:
+                            try {
+                                System.out.println("Digite o nome da Peça:");
+                                String nome = scanner.nextLine();
+
+                                System.out.println("Digite a marca da Peça:");
+                                String marca = scanner.nextLine();
+
+                                System.out.println("Digite a quantidade:");
+                                int quantidade = scanner.nextInt();
+
+
+                                boolean teste = carrinhoDAO.adicionarItemPedido(pedido, nome, marca, quantidade);
+                                if (teste){
+                                    System.out.println("O produto foi adicionado com sucesso!");
+                                } else{
+                                    System.out.println("Falha na adição do produto");
+                                }
+                                break;
+
+                            } catch (InputMismatchException e) {
+
+                                System.out.println("Erro: A quantidade deve ser um número inteiro.");
+                                scanner.nextLine();
+                                break;
+
+                            } catch (Exception e) {
+                                // Handles any other exceptions that might occur
+                                System.out.println("Ocorreu um erro: " + e.getMessage());
+                                break;
+                            }
+                        case 5:
+                            System.out.println(pedido);
+                            carrinhoDAO.verCarrinho(pedido);
+                            System.out.println("Voce não pode finalizar a compra porque voce não está logado!");
+                            break;
+
                         case 0:
                             running = false;
                             System.out.println("Saindo do programa...");
@@ -73,9 +101,37 @@ public class Main {
                             clienteDAO.menuVisualizarPecas();
                             break;
                         case 2:
-                            // Adicione aqui a lógica para adicionar peças ao carrinho
-                            System.out.println("Adicionar peças ao carrinho - em implementação.");
-                            break;
+                            try {
+                                System.out.println("Digite o nome da Peça:");
+                                String nome = scanner.nextLine();
+
+                                System.out.println("Digite a marca da Peça:");
+                                String marca = scanner.nextLine();
+
+                                System.out.println("Digite a quantidade:");
+                                int quantidade = scanner.nextInt();
+
+
+                                boolean teste = carrinhoDAO.adicionarItemPedido(pedido, nome, marca, quantidade);
+                                if (teste){
+                                    System.out.println("O produto foi adicionado com sucesso!");
+                                } else{
+                                    System.out.println("Falha na adição do produto");
+                                }
+                                break;
+
+                            } catch (InputMismatchException e) {
+
+                                System.out.println("Erro: A quantidade deve ser um número inteiro.");
+                                scanner.nextLine();
+                                break;
+
+                            } catch (Exception e) {
+                                // Handles any other exceptions that might occur
+                                System.out.println("Ocorreu um erro: " + e.getMessage());
+                                break;
+                            }
+
                         case 3:
                             // Adicione aqui a lógica para finalizar compra
                             System.out.println("Finalizar compra - em implementação.");
@@ -130,9 +186,10 @@ public class Main {
     private static void exibirMenuNaoLogado() {
         System.out.println("=== Menu Principal ===");
         System.out.println("1. Fazer cadastro");
-        System.out.println("2. Adicionar peças ao carrinho");
-        System.out.println("3. Fazer Login");
-        System.out.println("4. Visualizar Peças");
+        System.out.println("2. Fazer Login");
+        System.out.println("3. Visualizar Peças");
+        System.out.println("4. Adicionar peças ao carrinho");
+        System.out.println("5. Ver carrinho");
         System.out.println("0. Sair");
         System.out.print("Escolha uma opção: ");
     }

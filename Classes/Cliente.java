@@ -16,6 +16,12 @@ public class Cliente {
 
 
     // Getters e Setters
+
+
+    public long getIdCliente() { return idCliente; }
+
+    public void setIdCliente(long idCliente) { this.idCliente = idCliente; }
+
     public String getNome() {
         return nome;
     }

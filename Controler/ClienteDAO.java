@@ -62,14 +62,13 @@ public class ClienteDAO {
         }
     }
 
-    public int login(String emailOuNumero, String senha) throws SQLException {
+    public int login(String emailOuNumero, String senha, long pedido_id) throws SQLException {
         // Consulta para verificar login do Cliente (usando email)
         String queryCliente = "SELECT * FROM Cliente WHERE email = ? and senha = ?";
 
         // Consulta para verificar login do Funcionario (usando numero_cadastro)
         String queryFuncionario = "SELECT * FROM Funcionario WHERE numero_cadastro = ? and senha = ?";
 
-        // Verifica se a entrada é um email (presença de '@') ou CPF
         if (emailOuNumero.contains("@")) {
             // Login como Cliente (email)
             PreparedStatement stmtCliente = conn.prepareStatement(queryCliente);
@@ -78,10 +77,24 @@ public class ClienteDAO {
             ResultSet rsCliente = stmtCliente.executeQuery();
 
             if (rsCliente.next()) {
-                Banco.closeConnection(); // Fecha a conexão atual
-                conn = Banco.getConnection("cliente", "senha_cliente"); // Conecta com as credenciais do cliente
+                // Pega o cliente_id
+                long clienteId = rsCliente.getLong("id_cliente");
+
+                // Fecha a conexão atual e conecta com as credenciais do cliente
+                Banco.closeConnection();
+                conn = Banco.getConnection("cliente", "senha_cliente");
+
                 System.out.println("Você está logado como Cliente!");
-                return 1;
+
+                // Atualiza a tabela Pedido, associando o cliente aos pedidos não finalizados
+                String updatePedido = "UPDATE Pedido SET cliente_id = ? WHERE id_pedido = ?";
+                PreparedStatement stmtUpdatePedido = conn.prepareStatement(updatePedido);
+                stmtUpdatePedido.setLong(1, clienteId);
+                stmtUpdatePedido.setLong(2,pedido_id);
+                int rowsAffected = stmtUpdatePedido.executeUpdate();
+
+
+                return 1; // Cliente logado com sucesso
             }
         } else {
             // Login como Funcionario (numero_cadastro)
@@ -102,6 +115,7 @@ public class ClienteDAO {
         System.out.println("Login ou senha inválidos.");
         return 0;
     }
+
 
     public void menuVisualizarPecas() throws SQLException {
         Scanner scanner = new Scanner(System.in);
