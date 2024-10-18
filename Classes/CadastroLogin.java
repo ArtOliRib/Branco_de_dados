@@ -84,7 +84,7 @@ public class CadastroLogin {
         System.out.println("Saindo do menu.");
     }
 
-    public boolean[] exibirMenuLogin(boolean logadoCliente, boolean logadoFuncionario,long pedido) throws SQLException {
+    public boolean[] exibirMenuLogin(boolean logadoCliente, boolean logadoFuncionario,long pedido, Cliente cliente) throws SQLException {
         Scanner scanner = new Scanner(System.in);
         boolean continuar = true;
 
@@ -100,16 +100,16 @@ public class CadastroLogin {
 
             switch (opcao) {
                 case 1:
-                    System.out.print("Digite o seu CPF ou sua credencial de funcionario: ");
+                    System.out.print("Digite o seu Email ou sua Credencial de funcionario: ");
                     String cpf = scanner.nextLine();
                     System.out.print("Digite a senha: ");
                     String senha = scanner.nextLine();
-                    if (clienteDAO.login(cpf, senha,pedido) == 1) {
+                    if (clienteDAO.login(cpf, senha,pedido,cliente) == 1) {
                         logadoCliente = true; // Marcar como logado se o login for bem-sucedido
                         System.out.println("Login cliente bem-sucedido!");
                         return new boolean[]{logadoCliente, logadoFuncionario};
 
-                    } else if (clienteDAO.login(cpf, senha,pedido) == 2) {
+                    } else if (clienteDAO.login(cpf, senha,pedido,cliente) == 2) {
                         logadoFuncionario = true; // Marcar como logado se o login for bem-sucedido
                         System.out.println("Login Funcionario bem-sucedido!");
                         return new boolean[]{logadoCliente, logadoFuncionario};

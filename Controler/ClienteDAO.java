@@ -3,7 +3,6 @@ package Controler;
 import Classes.Cliente;
 import Banco.Banco;
 import java.util.Scanner;
-
 import java.math.BigDecimal;
 import java.sql.*;
 
@@ -12,47 +11,24 @@ public class ClienteDAO {
     private Connection conn;
 
     public ClienteDAO(Connection conn) {
-        this.conn = conn;  // Atribuindo a conexão recebida ao atributo da classe
+        this.conn = conn;  // Atribui a conexão recebida ao atributo da classe
     }
 
-    public void listarClientes() throws SQLException {
-        String query = "SELECT * FROM Cliente";
-
-        try (Statement stmt = conn.createStatement();
-             ResultSet rs = stmt.executeQuery(query)) {
-
-            while (rs.next()) {
-                Cliente cliente = new Cliente();
-                cliente.setNome(rs.getString("nome"));
-                cliente.setSobrenome(rs.getString("sobrenome"));
-                cliente.setCpf(rs.getString("cpf"));
-                cliente.setSenha(rs.getString("senha"));
-                cliente.setDataNascimento(rs.getDate("data_nascimento").toLocalDate());
-                cliente.setTorcida(rs.getString("torcida"));
-                cliente.setAssisteOp(rs.getBoolean("assiste_op"));
-                cliente.setCidade(rs.getString("cidade"));
-
-                System.out.println(cliente);
-
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-        // Retorna a lista de clientes
-    }
+    // Cadastra um novo cliente no banco de dados
     public boolean cadastrarCliente(Cliente cliente) throws SQLException {
-        String query = "INSERT INTO Cliente (nome, sobrenome, cpf, senha, data_nascimento, torcida, assiste_op, cidade) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+        String query = "INSERT INTO Cliente (nome, sobrenome, cpf, email, senha, data_nascimento, torcida, assiste_op, cidade) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
-        // Usando o 'conn' passado no construtor
+        // Usa a conexão passada no construtor
         try (PreparedStatement stmt = conn.prepareStatement(query)) {
             stmt.setString(1, cliente.getNome());
             stmt.setString(2, cliente.getSobrenome());
             stmt.setString(3, cliente.getCpf());
-            stmt.setString(4, cliente.getSenha()); // Certifique-se de que a senha está segura
-            stmt.setDate(5, Date.valueOf(cliente.getDataNascimento()));
-            stmt.setString(6, cliente.getTorcida());
-            stmt.setBoolean(7, cliente.isAssisteOp());
-            stmt.setString(8, cliente.getCidade());
+            stmt.setString(4, cliente.getEmail());
+            stmt.setString(5, cliente.getSenha()); // Certifique-se de que a senha está segura
+            stmt.setDate(6, Date.valueOf(cliente.getDataNascimento()));
+            stmt.setString(7, cliente.getTorcida());
+            stmt.setBoolean(8, cliente.isAssisteOp());
+            stmt.setString(9, cliente.getCidade());
 
             int rowsAffected = stmt.executeUpdate();
             return rowsAffected > 0; // Retorna true se a inserção foi bem-sucedida
@@ -62,23 +38,25 @@ public class ClienteDAO {
         }
     }
 
-    public int login(String emailOuNumero, String senha, long pedido_id) throws SQLException {
+    // Realiza o login do cliente ou funcionário com base nas credenciais fornecidas
+    public long login(String emailOuNumero, String senha, long pedido_id, Cliente cliente) throws SQLException {
         // Consulta para verificar login do Cliente (usando email)
         String queryCliente = "SELECT * FROM Cliente WHERE email = ? and senha = ?";
 
-        // Consulta para verificar login do Funcionario (usando numero_cadastro)
+        // Consulta para verificar login do Funcionário (usando numero_cadastro)
         String queryFuncionario = "SELECT * FROM Funcionario WHERE numero_cadastro = ? and senha = ?";
 
         if (emailOuNumero.contains("@")) {
-            // Login como Cliente (email)
+            // Tenta o login como Cliente (email)
             PreparedStatement stmtCliente = conn.prepareStatement(queryCliente);
             stmtCliente.setString(1, emailOuNumero);
             stmtCliente.setString(2, senha);
             ResultSet rsCliente = stmtCliente.executeQuery();
 
             if (rsCliente.next()) {
-                // Pega o cliente_id
+                // Obtém o cliente_id
                 long clienteId = rsCliente.getLong("id_cliente");
+                cliente.setIdCliente(clienteId);
 
                 // Fecha a conexão atual e conecta com as credenciais do cliente
                 Banco.closeConnection();
@@ -90,14 +68,13 @@ public class ClienteDAO {
                 String updatePedido = "UPDATE Pedido SET cliente_id = ? WHERE id_pedido = ?";
                 PreparedStatement stmtUpdatePedido = conn.prepareStatement(updatePedido);
                 stmtUpdatePedido.setLong(1, clienteId);
-                stmtUpdatePedido.setLong(2,pedido_id);
-                int rowsAffected = stmtUpdatePedido.executeUpdate();
-
+                stmtUpdatePedido.setLong(2, pedido_id);
+                stmtUpdatePedido.executeUpdate(); // Executa a atualização
 
                 return 1; // Cliente logado com sucesso
             }
         } else {
-            // Login como Funcionario (numero_cadastro)
+            // Tenta o login como Funcionário (numero_cadastro)
             PreparedStatement stmtFuncionario = conn.prepareStatement(queryFuncionario);
             stmtFuncionario.setString(1, emailOuNumero);
             stmtFuncionario.setString(2, senha);
@@ -106,17 +83,17 @@ public class ClienteDAO {
             if (rsFuncionario.next()) {
                 Banco.closeConnection(); // Fecha a conexão atual
                 conn = Banco.getConnection("funcionario", "senha_funcionario"); // Conecta com as credenciais do funcionário
-                System.out.println("Você está logado como Funcionario!");
-                return 2;
+                System.out.println("Você está logado como Funcionário!");
+                return 2; // Funcionário logado com sucesso
             }
         }
 
         // Caso não tenha encontrado cliente ou funcionário, login inválido
         System.out.println("Login ou senha inválidos.");
-        return 0;
+        return 0; // Login falhou
     }
 
-
+    // Exibe o menu para visualizar peças
     public void menuVisualizarPecas() throws SQLException {
         Scanner scanner = new Scanner(System.in);
         boolean continuar = true;
@@ -135,39 +112,40 @@ public class ClienteDAO {
 
             switch (opcao) {
                 case 1:
-                    this.visualizarPecas();
+                    this.visualizarPecas(); // Chama o método para listar todas as peças
                     break;
                 case 2:
                     System.out.print("Digite o nome da peça: ");
                     String nome = scanner.nextLine();
-                    this.pesquisarPecaPorNome(nome);
+                    this.pesquisarPecaPorNome(nome); // Chama o método para pesquisar peça por nome
                     break;
                 case 3:
                     System.out.print("Digite o nome do fabricante: ");
                     String fabricante = scanner.nextLine();
-                    this.pesquisarPecaPorFabricante(fabricante);
+                    this.pesquisarPecaPorFabricante(fabricante); // Chama o método para pesquisar peça por fabricante
                     break;
                 case 4:
-                    System.out.println("Digite a categoria da peça");
+                    System.out.print("Digite a categoria da peça: ");
                     String categoria = scanner.nextLine();
-                    this.pesquisarPecaPorCategoria(categoria);
+                    this.pesquisarPecaPorCategoria(categoria); // Chama o método para pesquisar peça por categoria
                     break;
                 case 5:
-                    continuar = false;
+                    continuar = false; // Encerra o loop se a opção for sair
                     System.out.println("Saindo do menu.");
                     break;
                 default:
-                    System.out.println("Opção inválida, tente novamente.");
+                    System.out.println("Opção inválida, tente novamente."); // Mensagem de erro para opções inválidas
             }
         }
     }
 
-    // Método para visualizar todas as peças
+    // Visualiza todas as peças no banco de dados
     public void visualizarPecas() throws SQLException {
         String query = "SELECT * FROM Produto";
-        Statement stmt = conn.createStatement(); // Usando o 'conn'
+        Statement stmt = conn.createStatement(); // Usa a conexão atual
         ResultSet rs = stmt.executeQuery(query);
 
+        // Cabeçalho das colunas
         System.out.printf("%-30s %-20s %-15s %-50s%n", "Nome", "Categoria", "Preço (R$)", "Descrição");
         System.out.println("=".repeat(120)); // Linha de separação
 
@@ -177,21 +155,22 @@ public class ClienteDAO {
             BigDecimal preco = rs.getBigDecimal("produto_preco");
             String descricao = rs.getString("produto_descricao");
 
+            // Exibe os dados das peças
             System.out.printf("%-30s %-20s %-15.2f %-50s%n", nome, categoria, preco, descricao);
         }
 
         System.out.println("=".repeat(120)); // Linha de separação no final
     }
 
-
-    // Método para pesquisar peças por nome
+    // Pesquisa peças por nome no banco de dados
     public void pesquisarPecaPorNome(String nome) throws SQLException {
         String query = "SELECT * FROM Produto WHERE produto_nome LIKE ?";
-        PreparedStatement stmt = conn.prepareStatement(query); // Usando o 'conn'
+        PreparedStatement stmt = conn.prepareStatement(query); // Usa a conexão atual
         stmt.setString(1, "%" + nome + "%");
 
         ResultSet rs = stmt.executeQuery();
 
+        // Cabeçalho das colunas
         System.out.printf("%-30s %-20s %-15s %-50s%n", "Nome", "Categoria", "Preço (R$)", "Descrição");
         System.out.println("=".repeat(120)); // Linha de separação
 
@@ -206,14 +185,15 @@ public class ClienteDAO {
         System.out.println("=".repeat(120)); // Linha de separação no final
     }
 
-    // Método para pesquisar peças por categoria
+    // Pesquisa peças por categoria no banco de dados
     public void pesquisarPecaPorCategoria(String categoria) throws SQLException {
         String query = "SELECT * FROM Produto WHERE produto_categoria = ?";
-        PreparedStatement stmt = conn.prepareStatement(query); // Usando o 'conn'
+        PreparedStatement stmt = conn.prepareStatement(query); // Usa a conexão atual
         stmt.setString(1, categoria);
 
         ResultSet rs = stmt.executeQuery();
 
+        // Cabeçalho das colunas
         System.out.printf("%-30s %-20s %-15s %-50s%n", "Nome", "Categoria", "Preço (R$)", "Descrição");
         System.out.println("=".repeat(120)); // Linha de separação
 
@@ -228,14 +208,15 @@ public class ClienteDAO {
         System.out.println("=".repeat(120)); // Linha de separação no final
     }
 
-    // Método para pesquisar peças por fabricante
+    // Pesquisa peças por fabricante no banco de dados
     public void pesquisarPecaPorFabricante(String fabricante) throws SQLException {
         String query = "SELECT * FROM Produto WHERE produto_fabricante = ?";
-        PreparedStatement stmt = conn.prepareStatement(query); // Usando o 'conn'
+        PreparedStatement stmt = conn.prepareStatement(query); // Usa a conexão atual
         stmt.setString(1, fabricante);
 
         ResultSet rs = stmt.executeQuery();
 
+        // Cabeçalho das colunas
         System.out.printf("%-30s %-20s %-15s %-50s%n", "Nome", "Categoria", "Preço (R$)", "Descrição");
         System.out.println("=".repeat(120)); // Linha de separação
 

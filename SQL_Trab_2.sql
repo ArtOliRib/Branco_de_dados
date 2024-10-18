@@ -36,16 +36,12 @@ CREATE TABLE Funcionario (
     sobrenome VARCHAR(50) NOT NULL
 );
 
-CREATE TABLE StatusPagamento (
-    id_status BIGINT AUTO_INCREMENT PRIMARY KEY,
-    descricao VARCHAR(20) NOT NULL
-);
 
 CREATE TABLE FormaPagamento (
     id_pagamento BIGINT AUTO_INCREMENT PRIMARY KEY,
     nome VARCHAR(50) NOT NULL,
     descricao VARCHAR(50) NOT NULL,
-    status_id BIGINT
+    status_id VARCHAR(50) NOT NULL
 );
 
 CREATE TABLE Pedido (
@@ -102,10 +98,6 @@ ALTER TABLE ItemPedido
 ADD CONSTRAINT fk_itemProduto
 FOREIGN KEY (produto_id) REFERENCES Produto(id_produto) ON UPDATE CASCADE ON DELETE CASCADE;
 
-ALTER TABLE FormaPagamento
-ADD CONSTRAINT fk_status
-FOREIGN KEY (status_id) REFERENCES StatusPagamento(id_status) ON UPDATE CASCADE ON DELETE SET NULL;
-
 ALTER TABLE Compra
 ADD CONSTRAINT fk_cliente_compra
 FOREIGN KEY (cliente_id) REFERENCES Cliente(id_cliente) ON UPDATE CASCADE ON DELETE CASCADE;
@@ -147,16 +139,13 @@ GRANT SELECT ON Cliente TO 'usuario_logado'@'localhost';
 GRANT SELECT ON Produto TO 'usuario_logado'@'localhost';
 GRANT SELECT ON Pedido TO 'usuario_logado'@'localhost';
 GRANT SELECT ON Compra TO 'usuario_logado'@'localhost';
-GRANT SELECT ON StatusPagamento TO 'usuario_logado'@'localhost';
 GRANT SELECT ON FormaPagamento TO 'usuario_logado'@'localhost';
 
 GRANT INSERT ON Compra TO 'usuario_logado'@'localhost';
 GRANT INSERT ON Pedido TO 'usuario_logado'@'localhost';
 GRANT INSERT ON ItemPedido TO 'usuario_logado'@'localhost';
-GRANT INSERT ON StatusPagamento TO 'usuario_logado'@'localhost';
 
 GRANT UPDATE ON Cliente TO 'usuario_logado'@'localhost';
-GRANT UPDATE ON StatusPagamento TO 'usuario_logado'@'localhost';
 
 
 
@@ -170,15 +159,14 @@ GRANT SELECT ON Pedido TO 'funcionario'@'localhost';
 GRANT SELECT ON Compra TO 'funcionario'@'localhost';
 GRANT SELECT ON Funcionario TO 'funcionario'@'localhost';
 GRANT SELECT ON FormaPagamento TO 'funcionario'@'localhost';
-GRANT SELECT ON StatusPagamento TO 'funcionario'@'localhost';
 
 GRANT INSERT ON Produto TO 'funcionario'@'localhost';
 GRANT INSERT ON FormaPagamento TO 'funcionario'@'localhost';
+GRANT INSERT ON Cliente TO 'funcionario'@'localhost';
 
 GRANT UPDATE ON Produto TO 'funcionario'@'localhost';
 GRANT UPDATE ON Funcionario TO 'funcionario'@'localhost';
 GRANT UPDATE ON FormaPagamento TO 'funcionario'@'localhost';
-GRANT UPDATE ON StatusPagamento TO 'funcionario'@'localhost';
 
 
 -- View de detalhes
@@ -204,6 +192,52 @@ JOIN
     Produto prod ON ip.produto_id = prod.id_produto
 WHERE 
     p.finalizado = FALSE;
+    
+
+DELIMITER //
+
+CREATE PROCEDURE RelatorioVendasSimplificado()
+BEGIN
+    -- Total de Vendas
+    SELECT 
+        SUM(ip.quantidade * ip.valor_unitario) AS total_vendas,
+        SUM(ip.quantidade) AS total_pecas_vendidas,
+        COUNT(DISTINCT p.id_pedido) AS total_pedidos
+    FROM 
+        Pedido p
+    JOIN 
+        ItemPedido ip ON p.id_pedido = ip.pedido_id;
+
+    -- Total de Vendas por Funcionário
+    SELECT 
+        f.id_funcionario,
+        CONCAT(f.nome, ' ', f.sobrenome) AS funcionario_nome,
+        SUM(ip.quantidade * ip.valor_unitario) AS total_vendas_funcionario
+    FROM 
+        Funcionario f
+    JOIN 
+        Pedido p ON f.id_funcionario = p.funcionario_id
+    JOIN 
+        ItemPedido ip ON p.id_pedido = ip.pedido_id
+    GROUP BY 
+        f.id_funcionario, f.nome, f.sobrenome;
+
+    -- Total de Vendas por Categoria de Produto
+    SELECT 
+        pr.produto_categoria,
+        SUM(ip.quantidade * ip.valor_unitario) AS total_vendas_categoria
+    FROM 
+        ItemPedido ip
+    JOIN 
+        Produto pr ON ip.produto_id = pr.id_produto
+    JOIN 
+        Pedido p ON ip.pedido_id = p.id_pedido
+    GROUP BY 
+        pr.produto_categoria;
+END //
+
+DELIMITER ;
+
 
 
 
@@ -218,6 +252,13 @@ VALUES
 ('João', 'Oliveira', '34567890123', 'joao.oliveira@example.com', 'senhaJoao123', '1992-12-02', 'Botafogo', TRUE, 'Brasília'),
 ('Mariana', 'Lima', '45678901234', 'mariana.lima@example.com', 'senhaMariana123', '1995-07-18', 'Fluminense', TRUE, 'Belo Horizonte'),
 ('Pedro', 'Gomes', '56789012345', 'pedro.gomes@example.com', 'senhaPedro123', '1988-03-10', 'Corinthians', FALSE, 'Porto Alegre');
+
+
+-- Agora, insira as formas de pagamento ativas
+INSERT INTO FormaPagamento (nome, descricao, status_id) VALUES ('Cartão de Crédito','Pagamentos feitos pelo cartão bancario', 'ativo');
+INSERT INTO FormaPagamento (nome, descricao, status_id) VALUES ('Boleto Bancário','Pagamentos feitos pelo cartão bancario' ,'ativo');
+INSERT INTO FormaPagamento (nome, descricao, status_id) VALUES ('PIX','Pagamento atraves do sistema PIX' ,'ativo');
+
 
 
 
