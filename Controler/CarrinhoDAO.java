@@ -146,7 +146,7 @@ public class CarrinhoDAO {
     public long finalizarCompraComPagamento(long idPedido, long idCliente) throws SQLException {
         double desconto = calcularDescontoCliente(idCliente);
         double valorTotal = calcularValorTotalPedido(idPedido);
-        double valorComDesconto = aplicarDesconto(valorTotal, desconto); // Aplica desconto ao valor total
+        double valorComDesconto = valorTotal * (1 - desconto); // Aplica desconto ao valor total
 
         // Exibe as formas de pagamento disponíveis
         long formaPagamentoId = escolherFormaPagamento();
@@ -194,7 +194,7 @@ public class CarrinhoDAO {
                     return -1;
                 }
 
-                detalhesPagamento = "Chave PIX: " + chavePix;
+                System.out.println("Pagamento Pix Confirmado!");
                 break;
 
 
@@ -233,7 +233,6 @@ public class CarrinhoDAO {
 
         return chavePix.toString();
     }
-
 
 
     private String gerarBoleto() {
@@ -290,11 +289,6 @@ public class CarrinhoDAO {
             desconto += 0.10;  // Mais 10% de desconto se for de Sousa
         }
         return desconto; // Retorna o total de desconto calculado
-    }
-
-    // Aplica o desconto ao valor total
-    private double aplicarDesconto(double valorTotal, double desconto) {
-        return valorTotal * (1 - desconto); // Retorna o valor total com desconto aplicado
     }
 
     // Escolhe uma forma de pagamento disponível
