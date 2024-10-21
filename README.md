@@ -1,2 +1,6 @@
 # Branco_de_dados
-Entregáveis para a cadeira de Banco de dados 
+Projeto final para cadeira de Banco de dados.
+
+Alunos: - ARTHUR OLIVEIRA RIBEIRO,
+        - JOAS GOMES DOS SANTOS,
+        - RENAN GONDIM DIAS DE ALBUQUERQUE;
