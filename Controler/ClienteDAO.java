@@ -172,16 +172,18 @@ public class ClienteDAO {
         ResultSet rs = stmt.executeQuery();
 
         // Cabeçalho das colunas
-        System.out.printf("%-30s %-20s %-15s %-50s%n %-30s", "Nome", "Categoria", "Preço (R$)", "Descrição", "Fabricante");
-        System.out.println("=".repeat(120)); // Linha de separação
+        System.out.printf("%-30s %-20s %-15s %-50s %-30s%n", "Nome", "Categoria", "Preço (R$)", "Descrição", "Fabricante");
+        System.out.println("=".repeat(150)); // Linha de separação
 
         while (rs.next()) {
-            System.out.printf("%-30s %-20s %-15.2f %-50s%n %-30s",
-                    rs.getString("produto_nome"),
-                    rs.getString("produto_categoria"),
-                    rs.getBigDecimal("produto_preco"),
-                    rs.getString("produto_descricao"),
-                    rs.getString("produto_descricao"));
+            String nomeM = rs.getString("produto_nome");
+            String categoria = rs.getString("produto_categoria");
+            BigDecimal preco = rs.getBigDecimal("produto_preco");
+            String descricao = rs.getString("produto_descricao");
+            String fabricante = rs.getString("produto_fabricante");
+
+            // Exibe os dados das peças com espaçamento adequado
+            System.out.printf("%-30s %-20s %-15.2f %-50s %-30s%n", nomeM, categoria, preco, descricao, fabricante);
         }
 
         System.out.println("=".repeat(120)); // Linha de separação no final
@@ -196,16 +198,18 @@ public class ClienteDAO {
         ResultSet rs = stmt.executeQuery();
 
         // Cabeçalho das colunas
-        System.out.printf("%-30s %-20s %-15s %-50s%n %-30s", "Nome", "Categoria", "Preço (R$)", "Descrição", "Fabricante");
-        System.out.println("=".repeat(120)); // Linha de separação
+        System.out.printf("%-30s %-20s %-15s %-50s %-30s%n", "Nome", "Categoria", "Preço (R$)", "Descrição", "Fabricante");
+        System.out.println("=".repeat(150)); // Linha de separação
 
         while (rs.next()) {
-            System.out.printf("%-30s %-20s %-15.2f %-50s%n %-30s",
-                    rs.getString("produto_nome"),
-                    rs.getString("produto_categoria"),
-                    rs.getBigDecimal("produto_preco"),
-                    rs.getString("produto_descricao"),
-                    rs.getString("produto_descricao"));
+            String nome = rs.getString("produto_nome");
+            String categoriaM = rs.getString("produto_categoria");
+            BigDecimal preco = rs.getBigDecimal("produto_preco");
+            String descricao = rs.getString("produto_descricao");
+            String fabricante = rs.getString("produto_fabricante");
+
+            // Exibe os dados das peças com espaçamento adequado
+            System.out.printf("%-30s %-20s %-15.2f %-50s %-30s%n", nome, categoriaM, preco, descricao, fabricante);
         }
 
         System.out.println("=".repeat(120)); // Linha de separação no final
@@ -220,16 +224,18 @@ public class ClienteDAO {
         ResultSet rs = stmt.executeQuery();
 
         // Cabeçalho das colunas
-        System.out.printf("%-30s %-20s %-15s %-50s%n %-30s", "Nome", "Categoria", "Preço (R$)", "Descrição", "Fabricante");
-        System.out.println("=".repeat(120)); // Linha de separação
+        System.out.printf("%-30s %-20s %-15s %-50s %-30s%n", "Nome", "Categoria", "Preço (R$)", "Descrição", "Fabricante");
+        System.out.println("=".repeat(150)); // Linha de separação
 
         while (rs.next()) {
-            System.out.printf("%-30s %-20s %-15.2f %-50s%n %-30s",
-                    rs.getString("produto_nome"),
-                    rs.getString("produto_categoria"),
-                    rs.getBigDecimal("produto_preco"),
-                    rs.getString("produto_descricao"),
-                    rs.getString("produto_descricao"));
+            String nome = rs.getString("produto_nome");
+            String categoria = rs.getString("produto_categoria");
+            BigDecimal preco = rs.getBigDecimal("produto_preco");
+            String descricao = rs.getString("produto_descricao");
+            String fabricantem = rs.getString("produto_fabricante");
+
+            // Exibe os dados das peças com espaçamento adequado
+            System.out.printf("%-30s %-20s %-15.2f %-50s %-30s%n", nome, categoria, preco, descricao, fabricantem);
         }
 
         System.out.println("=".repeat(120)); // Linha de separação no final
